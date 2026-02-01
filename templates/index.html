@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Classifier - Control Panel</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f1419;
+            color: #e7e9ea;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: #192734;
+            border: 1px solid #2f3336;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-running { background: #00ba7c; }
+        .status-stopped { background: #71767b; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #e7e9ea;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px;
+            background: #0f1419;
+            border: 1px solid #2f3336;
+            border-radius: 8px;
+            color: #e7e9ea;
+            font-size: 14px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-danger {
+            background: #f4212e;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc1c29;
+        }
+        
+        .btn-secondary {
+            background: #2f3336;
+            color: #e7e9ea;
+        }
+        
+        .btn-secondary:hover {
+            background: #3e4348;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .log-viewer {
+            background: #0f1419;
+            border: 1px solid #2f3336;
+            border-radius: 8px;
+            padding: 16px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .log-line {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(47, 51, 54, 0.3);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: #0f1419;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #2f3336;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #71767b;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        
+        .categories-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .category-tag {
+            background: #2f3336;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .category-tag button {
+            background: none;
+            border: none;
+            color: #f4212e;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: rgba(0, 186, 124, 0.1);
+            border: 1px solid #00ba7c;
+            color: #00ba7c;
+        }
+        
+        .alert-error {
+            background: rgba(244, 33, 46, 0.1);
+            border: 1px solid #f4212e;
+            color: #f4212e;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📁 Document Classifier</h1>
+            <p class="subtitle">Control Panel - Classification IA automatique</p>
+        </header>
+        
+        <div id="alert-container"></div>
+        
+        <div class="grid">
+            <!-- Service Control -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="status-indicator" id="status-indicator"></span>
+                    <span>Service Status</span>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-total">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-success">0</div>
+                        <div class="stat-label">Succès</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-failed">0</div>
+                        <div class="stat-label">Échecs</div>
+                    </div>
+                </div>
+                
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="dry-run-checkbox">
+                        <span>Dry Run (simulation)</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="verbose-checkbox">
+                        <span>Verbose (détails)</span>
+                    </label>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="start-btn" onclick="startService()">
+                        ▶️ Démarrer
+                    </button>
+                    <button class="btn btn-danger" id="stop-btn" onclick="stopService()" disabled>
+                        ⏹️ Arrêter
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Configuration -->
+            <div class="card">
+                <div class="card-title">⚙️ Configuration</div>
+                
+                <div class="form-group">
+                    <label>Dossier Source</label>
+                    <input type="text" id="source-dir" placeholder="/path/to/source">
+                </div>
+                
+                <div class="form-group">
+                    <label>Dossier Cible</label>
+                    <input type="text" id="target-dir" placeholder="/path/to/target">
+                </div>
+                
+                <div class="form-group">
+                    <label>Seuil de Confiance (%)</label>
+                    <input type="number" id="confidence-threshold" min="0" max="100" step="5" value="70">
+                </div>
+                
+                <div class="form-group">
+                    <label>Modèle IA</label>
+                    <select id="model-select">
+                        <option value="mistral">Mistral</option>
+                        <option value="llama2">Llama 2</option>
+                        <option value="codellama">Code Llama</option>
+                    </select>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="loadConfig()">
+                        🔄 Recharger
+                    </button>
+                    <button class="btn btn-primary" onclick="saveConfig()">
+                        💾 Sauvegarder
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Categories -->
+            <div class="card full-width">
+                <div class="card-title">🏷️ Catégories</div>
+                
+                <div class="form-group">
+                    <input type="text" id="new-category" placeholder="Nouvelle catégorie..." onkeypress="if(event.key==='Enter') addCategory()">
+                </div>
+                
+                <div class="categories-list" id="categories-list"></div>
+            </div>
+            
+            <!-- Log Viewer -->
+            <div class="card full-width">
+                <div class="card-title">📋 Logs en temps réel</div>
+                <div class="log-viewer" id="log-viewer"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const socket = io();
+        let currentConfig = {};
+        
+        // WebSocket Events
+        socket.on('connect', () => {
+            console.log('WebSocket connected');
+            addLog('✅ Connecté au serveur');
+        });
+        
+        socket.on('new_log_line', (data) => {
+            addLog(data.log);
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfig();
+            updateServiceStatus();
+            setInterval(updateServiceStatus, 2000);
+        });
+        
+        // Service Control
+        async function startService() {
+            const dryRun = document.getElementById('dry-run-checkbox').checked;
+            const verbose = document.getElementById('verbose-checkbox').checked;
+            const model = document.getElementById('model-select').value;
+            
+            try {
+                const response = await fetch('/api/service/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dry_run: dryRun, verbose: verbose, model: model })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Service démarré', 'success');
+                    document.getElementById('start-btn').disabled = true;
+                    document.getElementById('stop-btn').disabled = false;
+                } else {
+                    showAlert(data.error || 'Erreur', 'error');
+                }
+            } catch (error) {
+                showAlert('Erreur réseau', 'error');
+            }
+        }
+        
+        async function stopService() {
+            try {
+                const response = await fetch('/api/service/stop', { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert(data.message || 'Service arrêté', 'success');
+                } else {
+                    showAlert(data.error || 'Erreur', 'error');
+                }
+            } catch (error) {
+                showAlert('Erreur réseau', 'error');
+            }
+        }
+        
+        async function updateServiceStatus() {
+            try {
+                const response = await fetch('/api/service/status');
+                const data = await response.json();
+                
+                const indicator = document.getElementById('status-indicator');
+                const startBtn = document.getElementById('start-btn');
+                const stopBtn = document.getElementById('stop-btn');
+                
+                if (data.status === 'running') {
+                    indicator.className = 'status-indicator status-running';
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                } else {
+                    indicator.className = 'status-indicator status-stopped';
+                    startBtn.disabled = false;
+                    stopBtn.disabled = true;
+                }
+                
+                // Update stats
+                if (data.stats) {
+                    document.getElementById('stat-total').textContent = data.stats.total || 0;
+                    document.getElementById('stat-success').textContent = data.stats.success || 0;
+                    document.getElementById('stat-failed').textContent = data.stats.failed || 0;
+                }
+            } catch (error) {
+                console.error('Error fetching status:', error);
+            }
+        }
+        
+        // Configuration
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                
+                currentConfig = config;
+                
+                document.getElementById('source-dir').value = config.source_directory || '';
+                document.getElementById('target-dir').value = config.target_directory || '';
+                document.getElementById('confidence-threshold').value = (config.confidence_threshold || 0.7) * 100;
+                document.getElementById('model-select').value = config.model || 'mistral';
+                
+                renderCategories(config.categories || []);
+                
+                showAlert('Configuration chargée', 'success');
+            } catch (error) {
+                showAlert('Erreur chargement config', 'error');
+            }
+        }
+        
+        async function saveConfig() {
+            const config = {
+                source_directory: document.getElementById('source-dir').value,
+                target_directory: document.getElementById('target-dir').value,
+                confidence_threshold: parseFloat(document.getElementById('confidence-threshold').value) / 100,
+                model: document.getElementById('model-select').value,
+                categories: currentConfig.categories || []
+            };
+            
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                
+                if (response.ok) {
+                    showAlert('Configuration sauvegardée', 'success');
+                    currentConfig = config;
+                } else {
+                    showAlert('Erreur sauvegarde', 'error');
+                }
+            } catch (error) {
+                showAlert('Erreur réseau', 'error');
+            }
+        }
+        
+        // Categories
+        function renderCategories(categories) {
+            const list = document.getElementById('categories-list');
+            list.innerHTML = '';
+            
+            categories.forEach(cat => {
+                const tag = document.createElement('div');
+                tag.className = 'category-tag';
+                tag.innerHTML = `
+                    <span>${cat}</span>
+                    <button onclick="removeCategory('${cat}')">×</button>
+                `;
+                list.appendChild(tag);
+            });
+        }
+        
+        function addCategory() {
+            const input = document.getElementById('new-category');
+            const value = input.value.trim();
+            
+            if (!value) return;
+            
+            if (!currentConfig.categories) {
+                currentConfig.categories = [];
+            }
+            
+            if (!currentConfig.categories.includes(value)) {
+                currentConfig.categories.push(value);
+                renderCategories(currentConfig.categories);
+                input.value = '';
+                showAlert(`Catégorie "${value}" ajoutée`, 'success');
+            }
+        }
+        
+        function removeCategory(category) {
+            if (currentConfig.categories) {
+                currentConfig.categories = currentConfig.categories.filter(c => c !== category);
+                renderCategories(currentConfig.categories);
+                showAlert(`Catégorie "${category}" supprimée`, 'success');
+            }
+        }
+        
+        // Logs
+        function addLog(message) {
+            const viewer = document.getElementById('log-viewer');
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            viewer.appendChild(line);
+            viewer.scrollTop = viewer.scrollHeight;
+            
+            // Limite à 500 lignes
+            while (viewer.children.length > 500) {
+                viewer.removeChild(viewer.firstChild);
+            }
+        }
+        
+        // Alerts
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

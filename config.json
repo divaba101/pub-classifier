@@ -1,0 +1,16 @@
+{
+    "source_directory": "/mnt/marge/docs/dropbox",
+    "target_directory": "/mnt/marge/docs",
+    "confidence_threshold": 0.7,
+    "model": "mistral",
+    "categories": [
+        "facture",
+        "contrat",
+        "administratif",
+        "personnel",
+        "medical",
+        "legal",
+        "CV",
+        "autre"
+    ]
+}
