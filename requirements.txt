@@ -1,0 +1,38 @@
+# Document Classifier - Requirements
+# Packages Python pour le moteur de classification de documents
+
+# Core dependencies
+ollama>=0.1.0
+pypdf>=3.15.0
+docx2txt>=0.8
+openpyxl>=3.1.2
+xlrd>=2.0.1
+flask>=2.3.3
+flask-cors>=4.0.0
+flask-socketio>=5.3.6
+psutil>=5.9.5
+
+# Optional dependencies for enhanced functionality
+# (Install with: pip install -r requirements.txt)
+
+# Development and testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Production deployment (optional)
+gunicorn>=21.2.0
+eventlet>=0.33.3
+
+# Monitoring and logging (included in structured_logger.py)
+# No additional packages needed - uses built-in Python modules
+
+# System dependencies (must be installed separately):
+# - Ollama (https://ollama.ai)
+# - Tesseract OCR (https://github.com/tesseract-ocr/tesseract)
+# - Poppler (pdftoppm) (https://poppler.freedesktop.org)
+# - rclone (https://rclone.org) - optional for cloud storage
+
+# Notes:
+# - All Python packages are pinned to minimum versions for compatibility
+# - System dependencies are not managed by pip and must be installed separately
+# - The application is designed to work with Python 3.8+

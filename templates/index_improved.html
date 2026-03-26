@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Classifier - Interface Améliorée</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #111827;
+            --bg-card: #1f2937;
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --border: #374151;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-card);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-indicator.running {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border-color: rgba(245, 158, 11, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            flex: 1;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .widget {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .widget h3 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Configuration Form */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            background: #0b1220;
+            border: 1px solid var(--border);
+            border-radius: 0.25rem;
+            color: var(--text-main);
+            font-size: 0.875rem;
+        }
+
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover { background: var(--primary-dark); }
+        .btn:disabled { background: var(--text-muted); cursor: not-allowed; }
+        .btn.success { background: var(--success); }
+        .btn.success:hover { background: #059669; }
+        .btn.warning { background: var(--warning); }
+        .btn.warning:hover { background: #d97706; }
+        .btn.danger { background: var(--danger); }
+        .btn.danger:hover { background: #dc2626; }
+
+        .toggle-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .toggle-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #0b1220;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.warning { background: var(--warning); }
+        .progress-fill.danger { background: var(--danger); }
+
+        /* Logs */
+        .logs-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .logs-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logs-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            border-left: 3px solid transparent;
+        }
+
+        .log-entry.info { border-left-color: var(--primary); background: rgba(37, 99, 235, 0.1); }
+        .log-entry.warning { border-left-color: var(--warning); background: rgba(245, 158, 11, 0.1); }
+        .log-entry.error { border-left-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .log-entry.debug { border-left-color: var(--text-muted); background: rgba(156, 163, 175, 0.1); }
+
+        /* Right Sidebar */
+        .right-sidebar {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .file-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        .file-item:last-child { border-bottom: none; }
+
+        .file-name { font-weight: 500; }
+        .file-meta { color: var(--text-muted); font-size: 0.75rem; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .right-sidebar {
+                order: 3;
+                height: auto;
+            }
+        }
+
+        /* Keyboard shortcuts hint */
+        .shortcuts-hint {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .shortcuts-hint.visible { display: block; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <div class="brand-icon">📄</div>
+            <h1>Document Classifier Pro</h1>
+            <div id="statusIndicator" class="status-indicator">
+                <span id="statusText">Prêt</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button id="shortcutsBtn" class="btn" title="Afficher les raccourcis">⌨️ Raccourcis</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Sidebar - Configuration -->
+        <div class="sidebar">
+            <div class="widget">
+                <h3>Configuration</h3>
+                <form id="configForm">
+                    <div class="form-group">
+                        <label for="sourceDir">Dossier Source</label>
+                        <input type="text" id="sourceDir" placeholder="/chemin/vers/source">
+                    </div>
+                    <div class="form-group">
+                        <label for="targetDir">Dossier Cible</label>
+                        <input type="text" id="targetDir" placeholder="/chemin/vers/cible">
+                    </div>
+                    <div class="form-group">
+                        <label for="categories">Catégories (une par ligne)</label>
+                        <textarea id="categories" placeholder="facture&#10;contrat&#10;autre"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="confidenceThreshold">Seuil de Confiance</label>
+                        <input type="range" id="confidenceThreshold" min="0" max="1" step="0.1" value="0.7">
+                        <div style="text-align: center; margin-top: 0.25rem; color: var(--text-muted); font-size: 0.875rem;">
+                            <span id="thresholdValue">70%</span>
+                        </div>
+                    </div>
+                    <div class="toggle-group">
+                        <label>
+                            <input type="checkbox" id="dryRun"> Mode Simulation
+                        </label>
+                        <label>
+                            <input type="checkbox" id="verbose"> Logs Détaillés
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="submit" class="btn">💾 Sauvegarder</button>
+                        <button type="button" id="testConfigBtn" class="btn warning">🧪 Tester</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="widget">
+                <h3>Contrôle</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button id="startBtn" class="btn success">▶️ Démarrer</button>
+                    <button id="stopBtn" class="btn danger">⏹️ Arrêter</button>
+                    <button id="clearCacheBtn" class="btn warning">🧹 Nettoyer Cache</button>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3>Statistiques</h3>
+                <div id="statsDisplay">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; text-align: center; font-size: 0.875rem;">
+                        <div>Total: <span id="statTotal">0</span></div>
+                        <div>Succès: <span id="statSuccess">0</span></div>
+                        <div>Échecs: <span id="statFailed">0</span></div>
+                        <div>OCR: <span id="statOcr">0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard -->
+            <div class="dashboard-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="cpuValue">0%</div>
+                    <div class="metric-label">CPU</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cpuProgress"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="memoryValue">0%</div>
+                    <div class="metric-label">Mémoire</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="memoryProgress"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="diskValue">0%</div>
+                    <div class="metric-label">Disque</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="diskProgress"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="cacheValue">0 MB</div>
+                    <div class="metric-label">Cache</div>
+                    <div style="text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        Entrées: <span id="cacheEntries">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs -->
+            <div class="logs-container">
+                <div class="logs-header">
+                    <h3>Logs Structurés</h3>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="logFileSelect" style="padding: 0.25rem; background: #0b1220; border: 1px solid var(--border); color: var(--text-main); border-radius: 0.25rem;">
+                            <option value="">Sélectionner un fichier...</option>
+                        </select>
+                        <button id="refreshLogsBtn" class="btn">🔄 Rafraîchir</button>
+                        <button id="clearLogsBtn" class="btn">🧹 Vider</button>
+                        <button id="downloadLogsBtn" class="btn">📥 Télécharger</button>
+                    </div>
+                </div>
+                <div id="logsBody" class="logs-body"></div>
+            </div>
+        </div>
+        <!-- LIVE PROGRESS DASHBOARD -->
+        <!-- Insert this into index_improved.html after the existing logs section -->
+
+        <style>
+        /* Progress Dashboard Styles */
+        .progress-dashboard {
+            background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #60a5fa 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-pill {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-value.success { color: #10b981; }
+        .stat-value.error { color: #ef4444; }
+        .stat-value.warning { color: #f59e0b; }
+        .stat-value.info { color: #60a5fa; }
+
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .live-feed {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .live-feed::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .live-feed::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        .live-feed::-webkit-scrollbar-thumb {
+            background: rgba(96, 165, 250, 0.3);
+            border-radius: 3px;
+        }
+
+        .live-feed::-webkit-scrollbar-thumb:hover {
+            background: rgba(96, 165, 250, 0.5);
+        }
+
+        .event-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            border-left: 3px solid transparent;
+            background: rgba(255, 255, 255, 0.02);
+            animation: slideIn 0.3s ease-out;
+            font-size: 0.875rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .event-item.debug {
+            border-left-color: #6b7280;
+            background: rgba(107, 114, 128, 0.05);
+        }
+
+        .event-item.info {
+            border-left-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.05);
+        }
+
+        .event-item.success {
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .event-item.warning {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .event-item.error {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .event-item.critical {
+            border-left-color: #dc2626;
+            background: rgba(220, 38, 38, 0.15);
+            animation: pulse 2s infinite;
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .event-type {
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .event-time {
+            font-size: 0.7rem;
+            color: #6b7280;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .event-message {
+            color: #e5e7eb;
+            line-height: 1.4;
+        }
+
+        .event-meta {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.125rem 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: #9ca3af;
+        }
+
+        .meta-tag .value {
+            color: #e5e7eb;
+            font-weight: 600;
+        }
+
+        .progress-bar-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-bar-wrapper {
+            position: relative;
+            height: 32px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.75rem;
+        }
+
+        .progress-bar-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            font-variant-numeric: tabular-nums;
+            z-index: 10;
+        }
+
+        .velocity-indicator {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .velocity-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .velocity-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #60a5fa;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .velocity-label {
+            font-size: 0.7rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-pill {
+            padding: 0.375rem 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-pill:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-pill.active {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .current-file-indicator {
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(96, 165, 250, 0.2);
+            border-top-color: #60a5fa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .current-file-info {
+            flex: 1;
+        }
+
+        .current-file-name {
+            font-weight: 600;
+            color: #e5e7eb;
+            margin-bottom: 0.25rem;
+        }
+
+        .current-file-status {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            font-size: 0.875rem;
+        }
+        </style>
+
+        <div class="progress-dashboard" id="progressDashboard" style="display: none;">
+            <!-- Header -->
+            <div class="progress-header">
+                <div class="progress-title">📊 Live Progress</div>
+                <div class="filter-pills">
+                    <button class="filter-pill active" data-level="all" onclick="filterEvents('all')">All</button>
+                    <button class="filter-pill" data-level="success" onclick="filterEvents('success')">Success</button>
+                    <button class="filter-pill" data-level="error" onclick="filterEvents('error')">Errors</button>
+                    <button class="filter-pill" data-level="info" onclick="filterEvents('info')">Info</button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="progress-stats-grid">
+                <div class="stat-pill">
+                    <div class="stat-value info" id="statTotal">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-pill">
+                    <div class="stat-value success" id="statSuccess">0</div>
+                    <div class="stat-label">Success</div>
+                </div>
+                <div class="stat-pill">
+                    <div class="stat-value error" id="statFailed">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-pill">
+                    <div class="stat-value warning" id="statOCR">0</div>
+                    <div class="stat-label">OCR</div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar-container">
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+                    <div class="progress-bar-text" id="progressBarText">0%</div>
+                </div>
+            </div>
+
+            <!-- Velocity Indicators -->
+            <div class="velocity-indicator">
+                <div class="velocity-item">
+                    <div class="velocity-value" id="velocityFiles">0</div>
+                    <div class="velocity-label">files/sec</div>
+                </div>
+                <div class="velocity-item">
+                    <div class="velocity-value" id="velocityAvgTime">0ms</div>
+                    <div class="velocity-label">avg time</div>
+                </div>
+                <div class="velocity-item">
+                    <div class="velocity-value" id="velocityETA">--:--</div>
+                    <div class="velocity-label">ETA</div>
+                </div>
+            </div>
+
+            <!-- Current File Indicator -->
+            <div class="current-file-indicator" id="currentFileIndicator" style="display: none;">
+                <div class="spinner"></div>
+                <div class="current-file-info">
+                    <div class="current-file-name" id="currentFileName">Processing file...</div>
+                    <div class="current-file-status" id="currentFileStatus">Reading...</div>
+                </div>
+            </div>
+
+            <!-- Live Event Feed -->
+            <div class="live-feed" id="liveFeed">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📄</div>
+                    <div class="empty-state-text">Waiting for processing to start...</div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        // ==================== PROGRESS TRACKING ====================
+
+        const progressState = {
+            events: [],
+            stats: {
+                total: 0,
+                processed: 0,
+                success: 0,
+                failed: 0,
+                ocr: 0,
+                skipped: 0
+            },
+            currentFile: null,
+            startTime: null,
+            filter: 'all'
+        };
+
+        function initProgressDashboard() {
+            // Show dashboard when processing starts
+            document.getElementById('progressDashboard').style.display = 'block';
+            progressState.startTime = Date.now();
+            progressState.events = [];
+    
+            // Clear the empty state
+            document.getElementById('liveFeed').innerHTML = '';
+        }
+
+        function handleProgressEvent(event) {
+            console.log('Progress event received:', event);
+    
+            // Add to events array
+            progressState.events.unshift(event); // Add to beginning
+            if (progressState.events.length > 100) {
+                progressState.events.pop(); // Keep only last 100
+            }
+    
+            // Update current file indicator
+            updateCurrentFileIndicator(event);
+    
+            // Update stats
+            updateProgressStats(event);
+    
+            // Add to live feed
+            addEventToFeed(event);
+    
+            // Update velocity metrics
+            updateVelocityMetrics();
+        }
+
+        function updateCurrentFileIndicator(event) {
+            const indicator = document.getElementById('currentFileIndicator');
+            const fileName = document.getElementById('currentFileName');
+            const fileStatus = document.getElementById('currentFileStatus');
+    
+            // Show indicator for active operations
+            const activeEvents = [
+                'file_reading', 'file_analyzing', 'ocr_started', 
+                'ocr_progress', 'ai_request_processing', 'file_moving'
+            ];
+    
+            if (activeEvents.includes(event.event_type)) {
+                indicator.style.display = 'flex';
+                fileName.textContent = event.file_name || 'Processing...';
+                fileStatus.textContent = getStatusText(event.event_type);
+            }
+    
+            // Hide for completion events
+            const completionEvents = ['file_moved', 'file_failed', 'file_skipped'];
+            if (completionEvents.includes(event.event_type)) {
+                setTimeout(() => {
+                    indicator.style.display = 'none';
+                }, 1000);
+            }
+        }
+
+        function getStatusText(eventType) {
+            const statusMap = {
+                'file_reading': 'Reading file...',
+                'file_analyzing': 'Analyzing with AI...',
+                'ocr_started': 'Running OCR...',
+                'ocr_progress': 'OCR in progress...',
+                'ai_request_processing': 'AI classification...',
+                'file_moving': 'Moving file...'
+            };
+            return statusMap[eventType] || 'Processing...';
+        }
+
+        function updateProgressStats(event) {
+            // Update stats based on event type
+            switch(event.event_type) {
+                case 'file_discovered':
+                    progressState.stats.total++;
+                    break;
+                case 'file_moved':
+                    progressState.stats.processed++;
+                    progressState.stats.success++;
+                    break;
+                case 'file_failed':
+                    progressState.stats.processed++;
+                    progressState.stats.failed++;
+                    break;
+                case 'file_skipped':
+                    progressState.stats.skipped++;
+                    break;
+                case 'ocr_complete':
+                    progressState.stats.ocr++;
+                    break;
+            }
+    
+            // Update UI
+            document.getElementById('statTotal').textContent = progressState.stats.total;
+            document.getElementById('statSuccess').textContent = progressState.stats.success;
+            document.getElementById('statFailed').textContent = progressState.stats.failed;
+            document.getElementById('statOCR').textContent = progressState.stats.ocr;
+    
+            // Update progress bar
+            if (progressState.stats.total > 0) {
+                const percentage = (progressState.stats.processed / progressState.stats.total) * 100;
+                document.getElementById('progressBarFill').style.width = `${percentage}%`;
+                document.getElementById('progressBarText').textContent = `${Math.round(percentage)}% (${progressState.stats.processed}/${progressState.stats.total})`;
+            }
+        }
+
+        function addEventToFeed(event) {
+            const feed = document.getElementById('liveFeed');
+    
+            // Filter check
+            if (progressState.filter !== 'all' && event.level !== progressState.filter) {
+                return;
+            }
+    
+            const eventItem = document.createElement('div');
+            eventItem.className = `event-item ${event.level}`;
+    
+            // Format timestamp
+            const timestamp = new Date(event.timestamp);
+            const timeStr = timestamp.toLocaleTimeString();
+    
+            // Build event HTML
+            let html = `
+                <div class="event-header">
+                    <div class="event-type">${formatEventType(event.event_type)}</div>
+                    <div class="event-time">${timeStr}</div>
+                </div>
+                <div class="event-message">${event.message}</div>
+            `;
+    
+            // Add metadata if present
+            if (shouldShowMetadata(event)) {
+                html += '<div class="event-meta">';
+        
+                if (event.category) {
+                    html += `<span class="meta-tag">Category: <span class="value">${event.category}</span></span>`;
+                }
+                if (event.confidence !== undefined) {
+                    html += `<span class="meta-tag">Confidence: <span class="value">${Math.round(event.confidence * 100)}%</span></span>`;
+                }
+                if (event.duration_ms) {
+                    html += `<span class="meta-tag">Duration: <span class="value">${event.duration_ms}ms</span></span>`;
+                }
+                if (event.file_size) {
+                    const sizeMB = (event.file_size / (1024 * 1024)).toFixed(2);
+                    html += `<span class="meta-tag">Size: <span class="value">${sizeMB} MB</span></span>`;
+                }
+        
+                html += '</div>';
+            }
+    
+            eventItem.innerHTML = html;
+    
+            // Add to feed (at the top)
+            if (feed.firstChild) {
+                feed.insertBefore(eventItem, feed.firstChild);
+            } else {
+                feed.appendChild(eventItem);
+            }
+    
+            // Limit feed size
+            while (feed.children.length > 50) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+
+        function shouldShowMetadata(event) {
+            return event.category || event.confidence !== undefined || 
+                event.duration_ms || event.file_size;
+        }
+
+        function formatEventType(type) {
+            return type.replace(/_/g, ' ').toUpperCase();
+        }
+
+        function updateVelocityMetrics() {
+            if (!progressState.startTime) return;
+    
+            const elapsedSeconds = (Date.now() - progressState.startTime) / 1000;
+    
+            // Files per second
+            const filesPerSec = progressState.stats.processed / elapsedSeconds;
+            document.getElementById('velocityFiles').textContent = filesPerSec.toFixed(2);
+    
+            // Average time (from events with duration_ms)
+            const durationEvents = progressState.events.filter(e => e.duration_ms);
+            if (durationEvents.length > 0) {
+                const avgTime = durationEvents.reduce((sum, e) => sum + e.duration_ms, 0) / durationEvents.length;
+                document.getElementById('velocityAvgTime').textContent = `${Math.round(avgTime)}ms`;
+            }
+    
+            // ETA
+            if (filesPerSec > 0) {
+                const remaining = progressState.stats.total - progressState.stats.processed;
+                const etaSeconds = remaining / filesPerSec;
+                const minutes = Math.floor(etaSeconds / 60);
+                const seconds = Math.floor(etaSeconds % 60);
+                document.getElementById('velocityETA').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        function filterEvents(level) {
+            progressState.filter = level;
+    
+            // Update active pill
+            document.querySelectorAll('.filter-pill').forEach(pill => {
+                pill.classList.toggle('active', pill.dataset.level === level);
+            });
+    
+            // Rebuild feed
+            const feed = document.getElementById('liveFeed');
+            feed.innerHTML = '';
+    
+            progressState.events.slice().reverse().forEach(event => {
+                addEventToFeed(event);
+            });
+        }
+
+        // Connect to existing socket handlers
+        socket.on('progress_event', handleProgressEvent);
+
+        socket.on('classification_start', () => {
+            initProgressDashboard();
+        });
+
+        socket.on('classification_complete', (data) => {
+            // Final update
+            const event = {
+                event_type: 'batch_complete',
+                level: 'success',
+                timestamp: new Date().toISOString(),
+                message: `🎉 Processing complete! ${data.success}/${data.total} files successful`,
+                metadata: data
+            };
+            handleProgressEvent(event);
+        });
+        </script>
+
+        <!-- Right Sidebar -->
+        <div class="right-sidebar">
+            <div class="widget">
+                <h3>Fichiers Source</h3>
+                <div id="fileList" class="file-list"></div>
+            </div>
+            
+            <div class="widget">
+                <h3>Cache & Pool</h3>
+                <div style="font-size: 0.875rem; line-height: 1.5;">
+                    <div>Cache Hit Rate: <span id="cacheHitRate">0%</span></div>
+                    <div>Pool Connections: <span id="poolConnections">0/0</span></div>
+                    <div>Pool Response Time: <span id="poolResponseTime">0ms</span></div>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3>Dernière Exécution</h3>
+                <div id="lastRunInfo" style="font-size: 0.875rem; color: var(--text-muted);">
+                    Jamais exécuté
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts -->
+    <div id="shortcutsModal" class="shortcuts-hint">
+        <h4>Raccourcis Clavier</h4>
+        <div style="margin-top: 0.5rem; font-size: 0.8rem;">
+            <div>Ctrl+S: Sauvegarder config</div>
+            <div>Ctrl+R: Rafraîchir fichiers</div>
+            <div>Ctrl+D: Mode simulation</div>
+            <div>Ctrl+L: Vider logs</div>
+            <div>Ctrl+K: Nettoyer cache</div>
+            <div>Ctrl+Space: Démarrer/Arrêter</div>
+            <div>Esc: Fermer cette aide</div>
+        </div>
+    </div>
+
+    <!-- Socket.IO Client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // Application State
+        const state = {
+            isRunning: false,
+            systemStatus: {},
+            logs: []
+        };
+
+        // DOM Elements
+        const elements = {
+            statusIndicator: document.getElementById('statusIndicator'),
+            statusText: document.getElementById('statusText'),
+            startBtn: document.getElementById('startBtn'),
+            stopBtn: document.getElementById('stopBtn'),
+            configForm: document.getElementById('configForm'),
+            sourceDir: document.getElementById('sourceDir'),
+            targetDir: document.getElementById('targetDir'),
+            categories: document.getElementById('categories'),
+            confidenceThreshold: document.getElementById('confidenceThreshold'),
+            thresholdValue: document.getElementById('thresholdValue'),
+            dryRun: document.getElementById('dryRun'),
+            verbose: document.getElementById('verbose'),
+            stats: {
+                total: document.getElementById('statTotal'),
+                success: document.getElementById('statSuccess'),
+                failed: document.getElementById('statFailed'),
+                ocr: document.getElementById('statOcr')
+            },
+            metrics: {
+                cpu: { value: document.getElementById('cpuValue'), progress: document.getElementById('cpuProgress') },
+                memory: { value: document.getElementById('memoryValue'), progress: document.getElementById('memoryProgress') },
+                disk: { value: document.getElementById('diskValue'), progress: document.getElementById('diskProgress') },
+                cache: { value: document.getElementById('cacheValue'), entries: document.getElementById('cacheEntries') }
+            },
+            logsBody: document.getElementById('logsBody'),
+            fileList: document.getElementById('fileList'),
+            cacheHitRate: document.getElementById('cacheHitRate'),
+            poolConnections: document.getElementById('poolConnections'),
+            poolResponseTime: document.getElementById('poolResponseTime'),
+            lastRunInfo: document.getElementById('lastRunInfo'),
+            shortcutsBtn: document.getElementById('shortcutsBtn'),
+            shortcutsModal: document.getElementById('shortcutsModal'),
+            clearLogsBtn: document.getElementById('clearLogsBtn'),
+            downloadLogsBtn: document.getElementById('downloadLogsBtn'),
+            clearCacheBtn: document.getElementById('clearCacheBtn'),
+            testConfigBtn: document.getElementById('testConfigBtn')
+        };
+
+        // Socket.IO Connection
+        const socket = io();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfig();
+            setupEventListeners();
+            requestStatus();
+            
+            // Initial refresh
+            refreshFiles();
+            loadLogFiles();
+            setInterval(refreshFiles, 30000); // Refresh every 30s
+        });
+
+        // Event Listeners
+        function setupEventListeners() {
+            // Form submission
+            if (elements.configForm) {
+                elements.configForm.addEventListener('submit', saveConfig);
+            }
+            
+            // Buttons
+            if (elements.startBtn) elements.startBtn.addEventListener('click', startClassification);
+            if (elements.stopBtn) elements.stopBtn.addEventListener('click', stopClassification);
+            if (elements.clearCacheBtn) elements.clearCacheBtn.addEventListener('click', clearCache);
+            if (elements.clearLogsBtn) elements.clearLogsBtn.addEventListener('click', clearLogs);
+            if (elements.downloadLogsBtn) elements.downloadLogsBtn.addEventListener('click', downloadLogs);
+            if (elements.testConfigBtn) elements.testConfigBtn.addEventListener('click', testConfig);
+            if (elements.shortcutsBtn) elements.shortcutsBtn.addEventListener('click', toggleShortcuts);
+            if (elements.refreshLogsBtn) elements.refreshLogsBtn.addEventListener('click', refreshCurrentLogFile);
+
+            // Inputs
+            if (elements.confidenceThreshold && elements.thresholdValue) {
+                elements.confidenceThreshold.addEventListener('input', (e) => {
+                    elements.thresholdValue.textContent = `${Math.round(e.target.value * 100)}%`;
+                });
+            }
+
+            // Log file selector
+            if (elements.logFileSelect) {
+                elements.logFileSelect.addEventListener('change', (e) => {
+                    const filename = e.target.value;
+                    if (filename) {
+                        loadLogFileContent(filename);
+                    }
+                });
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+        }
+
+        // Socket Events
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('system_update', (data) => {
+            updateSystemStatus(data);
+        });
+
+        socket.on('log', (data) => {
+            // Handle both old and new format
+            if (typeof data === 'string') {
+                // Old format: just the message
+                addLogEntry(data);
+            } else if (data && data.message) {
+                // New format: structured log
+                const formattedMessage = `[${data.timestamp}] ${data.logger} - ${data.level.toUpperCase()} - ${data.message}`;
+                addLogEntry(formattedMessage, data.level);
+            }
+        });
+
+        socket.on('classification_complete', (data) => {
+            state.isRunning = false;
+            updateStatus(false);
+            updateStats(data);
+            elements.lastRunInfo.textContent = new Date().toLocaleString();
+            addLogEntry('✅ Classification terminée avec succès', 'success');
+        });
+
+        socket.on('classification_error', (data) => {
+            state.isRunning = false;
+            updateStatus(false);
+            addLogEntry(`❌ Erreur: ${data.error}`, 'error');
+        });
+
+        // UI Updates
+        function updateStatus(isRunning) {
+            state.isRunning = isRunning;
+            if (isRunning) {
+                elements.statusIndicator.classList.add('running');
+                elements.statusText.textContent = 'En cours...';
+                elements.startBtn.disabled = true;
+                elements.stopBtn.disabled = false;
+            } else {
+                elements.statusIndicator.classList.remove('running');
+                elements.statusText.textContent = 'Prêt';
+                elements.startBtn.disabled = false;
+                elements.stopBtn.disabled = true;
+            }
+        }
+
+        function updateSystemStatus(data) {
+            state.systemStatus = data;
+            
+            // Update metrics
+            if (data.cpu_percent !== undefined) {
+                elements.metrics.cpu.value.textContent = `${data.cpu_percent.toFixed(1)}%`;
+                elements.metrics.cpu.progress.style.width = `${data.cpu_percent}%`;
+                elements.metrics.cpu.progress.className = `progress-fill ${getProgressClass(data.cpu_percent)}`;
+            }
+
+            if (data.memory_percent !== undefined) {
+                elements.metrics.memory.value.textContent = `${data.memory_percent.toFixed(1)}%`;
+                elements.metrics.memory.progress.style.width = `${data.memory_percent}%`;
+                elements.metrics.memory.progress.className = `progress-fill ${getProgressClass(data.memory_percent)}`;
+            }
+
+            if (data.disk_percent !== undefined) {
+                elements.metrics.disk.value.textContent = `${data.disk_percent.toFixed(1)}%`;
+                elements.metrics.disk.progress.style.width = `${data.disk_percent}%`;
+                elements.metrics.disk.progress.className = `progress-fill ${getProgressClass(data.disk_percent)}`;
+            }
+
+            if (data.cache_info && data.cache_info.cache_size_mb !== undefined) {
+                elements.metrics.cache.value.textContent = `${data.cache_info.cache_size_mb.toFixed(1)} MB`;
+                elements.metrics.cache.entries.textContent = data.cache_info.entries_count || 0;
+            }
+
+            // Update cache & pool info
+            if (data.cache_info) {
+                elements.cacheHitRate.textContent = `${(data.cache_info.hit_rate * 100).toFixed(1)}%`;
+            }
+
+            if (data.pool_info) {
+                elements.poolConnections.textContent = `${data.pool_info.active_connections}/${data.pool_info.max_connections}`;
+                elements.poolResponseTime.textContent = `${data.pool_info.avg_response_time.toFixed(0)}ms`;
+            }
+        }
+
+        function getProgressClass(value) {
+            if (value > 80) return 'danger';
+            if (value > 60) return 'warning';
+            return 'success';
+        }
+
+        function updateStats(stats) {
+            elements.stats.total.textContent = stats.total || 0;
+            elements.stats.success.textContent = stats.success || 0;
+            elements.stats.failed.textContent = stats.failed || 0;
+            elements.stats.ocr.textContent = stats.ocr || 0;
+        }
+
+        function addLogEntry(message, level = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${level}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            elements.logsBody.appendChild(logEntry);
+            elements.logsBody.scrollTop = elements.logsBody.scrollHeight;
+            
+            // Keep only last 1000 logs
+            while (elements.logsBody.children.length > 1000) {
+                elements.logsBody.removeChild(elements.logsBody.firstChild);
+            }
+        }
+
+        // API Calls
+        async function requestStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                updateStatus(data.is_running);
+                updateStats(data.stats);
+                if (data.last_run) {
+                    elements.lastRunInfo.textContent = new Date(data.last_run).toLocaleString();
+                }
+            } catch (error) {
+                console.error('Error fetching status:', error);
+            }
+        }
+
+        async function saveConfig(e) {
+            if (e) e.preventDefault();
+            
+            const categories = elements.categories.value
+                .split('\n')
+                .map(cat => cat.trim())
+                .filter(cat => cat.length > 0);
+
+            const config = {
+                source_dir: elements.sourceDir.value,
+                target_dir: elements.targetDir.value,
+                categories: categories,
+                confidence_threshold: parseFloat(elements.confidenceThreshold.value),
+                dry_run: elements.dryRun.checked,
+                verbose: elements.verbose.checked
+            };
+
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    addLogEntry('Configuration sauvegardée', 'success');
+                } else {
+                    addLogEntry(`Erreur: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLogEntry(`Erreur réseau: ${error.message}`, 'error');
+            }
+        }
+
+        async function startClassification() {
+            try {
+                const response = await fetch('/api/start', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateStatus(true);
+                    addLogEntry('Démarrage du traitement...', 'info');
+                } else {
+                    addLogEntry(`Erreur: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLogEntry(`Erreur réseau: ${error.message}`, 'error');
+            }
+        }
+
+        async function stopClassification() {
+            try {
+                const response = await fetch('/api/stop', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    addLogEntry('Arrêt demandé...', 'warning');
+                } else {
+                    addLogEntry(`Erreur: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLogEntry(`Erreur réseau: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearCache() {
+            try {
+                const response = await fetch('/api/cache/clear', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    addLogEntry('Cache nettoyé', 'success');
+                } else {
+                    addLogEntry(`Erreur: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLogEntry(`Erreur réseau: ${error.message}`, 'error');
+            }
+        }
+
+        async function refreshFiles() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+                
+                if (data.files) {
+                    renderFileList(data.files);
+                }
+            } catch (error) {
+                console.error('Error fetching files:', error);
+            }
+        }
+
+        function renderFileList(files) {
+            elements.fileList.innerHTML = '';
+            
+            files.slice(0, 50).forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <div>
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-meta">${file.size_mb} MB • ${file.extension}</div>
+                    </div>
+                    <div class="file-meta">${new Date(file.modified).toLocaleDateString()}</div>
+                `;
+                elements.fileList.appendChild(item);
+            });
+        }
+
+        async function clearLogs() {
+            elements.logsBody.innerHTML = '';
+            addLogEntry('Logs vidés', 'info');
+        }
+
+        async function downloadLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const data = await response.json();
+                
+                const content = data.logs.map(log => 
+                    `[${new Date(log.timestamp).toLocaleString()}] ${log.level}: ${log.message}`
+                ).join('\n');
+                
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `classifier-logs-${new Date().toISOString().slice(0, 10)}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                addLogEntry('Logs téléchargés', 'success');
+            } catch (error) {
+                addLogEntry(`Erreur téléchargement: ${error.message}`, 'error');
+            }
+        }
+
+        async function testConfig() {
+            const categories = elements.categories.value
+                .split('\n')
+                .map(cat => cat.trim())
+                .filter(cat => cat.length > 0);
+
+            try {
+                const response = await fetch('/api/categories/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categories })
+                });
+                
+                const result = await response.json();
+                
+                if (result.valid) {
+                    addLogEntry('Catégories valides', 'success');
+                } else {
+                    addLogEntry(`Erreurs: ${result.errors.join(', ')}`, 'error');
+                }
+            } catch (error) {
+                addLogEntry(`Erreur test: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                
+                if (config.source_dir) elements.sourceDir.value = config.source_dir;
+                if (config.target_dir) elements.targetDir.value = config.target_dir;
+                if (config.categories) elements.categories.value = config.categories.join('\n');
+                if (config.confidence_threshold) {
+                    elements.confidenceThreshold.value = config.confidence_threshold;
+                    elements.thresholdValue.textContent = `${Math.round(config.confidence_threshold * 100)}%`;
+                }
+                if (config.dry_run) elements.dryRun.checked = config.dry_run;
+                if (config.verbose) elements.verbose.checked = config.verbose;
+            } catch (error) {
+                console.error('Error loading config:', error);
+            }
+        }
+
+        async function loadLogFiles() {
+            try {
+                const response = await fetch('/api/logs/files');
+                const data = await response.json();
+                
+                if (data.files) {
+                    renderLogFilesList(data.files);
+                    // Auto-select the most recent log file
+                    if (data.files.length > 0) {
+                        const mostRecent = data.files[0]; // Files are sorted by modification time
+                        const selectElement = document.getElementById('logFileSelect');
+                        if (selectElement) {
+                            selectElement.value = mostRecent.name;
+                            await loadLogFileContent(mostRecent.name);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading log files:', error);
+            }
+        }
+
+        function renderLogFilesList(files) {
+            const select = document.getElementById('logFileSelect');
+            select.innerHTML = '<option value="">Sélectionner un fichier...</option>';
+            
+            files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file.name;
+                option.textContent = `${file.name} (${formatFileSize(file.size)})`;
+                select.appendChild(option);
+            });
+        }
+
+        async function loadLogFileContent(filename) {
+            if (!filename) return;
+            
+            try {
+                const response = await fetch(`/api/logs/file/${filename}`);
+                const data = await response.json();
+                
+                if (data.logs) {
+                    displayStructuredLogs(data.logs);
+                    addLogEntry(`Chargé: ${filename} (${data.logs.length} entrées)`, 'info');
+                } else if (data.error) {
+                    addLogEntry(`Erreur: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLogEntry(`Erreur chargement: ${error.message}`, 'error');
+            }
+        }
+
+        function displayStructuredLogs(logs) {
+            elements.logsBody.innerHTML = '';
+            
+            // Sort logs by timestamp (newest first)
+            logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            logs.forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${log.level || 'info'}`;
+                
+                // Format the log entry
+                const timestamp = new Date(log.timestamp).toLocaleString();
+                const level = (log.level || 'info').toUpperCase();
+                const logger = log.logger || 'SYSTEM';
+                const message = log.message || '';
+                
+                logEntry.innerHTML = `
+                    <div style="font-weight: bold; color: var(--text-muted); font-size: 0.75rem; margin-bottom: 0.25rem;">
+                        [${timestamp}] ${logger} - ${level}
+                    </div>
+                    <div style="margin-left: 1rem;">
+                        ${message}
+                    </div>
+                `;
+                
+                elements.logsBody.appendChild(logEntry);
+            });
+            
+            elements.logsBody.scrollTop = 0; // Scroll to top
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        async function refreshCurrentLogFile() {
+            try {
+                // Get the current selected file
+                const selectElement = document.getElementById('logFileSelect');
+                const currentFile = selectElement ? selectElement.value : '';
+                
+                if (currentFile) {
+                    addLogEntry(`🔄 Rafraîchissement du fichier: ${currentFile}`, 'info');
+                    await loadLogFileContent(currentFile);
+                    addLogEntry(`✅ Fichier rafraîchi: ${currentFile}`, 'success');
+                } else {
+                    addLogEntry('⚠️ Aucun fichier de logs sélectionné', 'warning');
+                }
+            } catch (error) {
+                addLogEntry(`❌ Erreur lors du rafraîchissement: ${error.message}`, 'error');
+            }
+        }
+
+        // Keyboard Shortcuts
+        function handleKeyboardShortcuts(e) {
+            if (e.ctrlKey) {
+                switch (e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveConfig();
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        refreshFiles();
+                        break;
+                    case 'd':
+                        e.preventDefault();
+                        elements.dryRun.checked = !elements.dryRun.checked;
+                        break;
+                    case 'l':
+                        e.preventDefault();
+                        clearLogs();
+                        break;
+                    case 'k':
+                        e.preventDefault();
+                        clearCache();
+                        break;
+                    case ' ':
+                        e.preventDefault();
+                        if (state.isRunning) {
+                            stopClassification();
+                        } else {
+                            startClassification();
+                        }
+                        break;
+                }
+            } else if (e.key === 'Escape') {
+                toggleShortcuts();
+            }
+        }
+
+        function toggleShortcuts() {
+            elements.shortcutsModal.classList.toggle('visible');
+        }
+    </script>
+</body>
+</html>

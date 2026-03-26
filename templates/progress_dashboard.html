@@ -1,0 +1,672 @@
+<!-- LIVE PROGRESS DASHBOARD -->
+<!-- Insert this into index_improved.html after the existing logs section -->
+
+<style>
+/* Progress Dashboard Styles */
+.progress-dashboard {
+    background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%);
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.progress-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #60a5fa 0%, #818cf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.progress-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-pill {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-value.success { color: #10b981; }
+.stat-value.error { color: #ef4444; }
+.stat-value.warning { color: #f59e0b; }
+.stat-value.info { color: #60a5fa; }
+
+.stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.live-feed {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.live-feed::-webkit-scrollbar {
+    width: 6px;
+}
+
+.live-feed::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.live-feed::-webkit-scrollbar-thumb {
+    background: rgba(96, 165, 250, 0.3);
+    border-radius: 3px;
+}
+
+.live-feed::-webkit-scrollbar-thumb:hover {
+    background: rgba(96, 165, 250, 0.5);
+}
+
+.event-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+    background: rgba(255, 255, 255, 0.02);
+    animation: slideIn 0.3s ease-out;
+    font-size: 0.875rem;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.event-item.debug {
+    border-left-color: #6b7280;
+    background: rgba(107, 114, 128, 0.05);
+}
+
+.event-item.info {
+    border-left-color: #60a5fa;
+    background: rgba(96, 165, 250, 0.05);
+}
+
+.event-item.success {
+    border-left-color: #10b981;
+    background: rgba(16, 185, 129, 0.08);
+}
+
+.event-item.warning {
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.event-item.error {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.event-item.critical {
+    border-left-color: #dc2626;
+    background: rgba(220, 38, 38, 0.15);
+    animation: pulse 2s infinite;
+}
+
+.event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.event-type {
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.event-time {
+    font-size: 0.7rem;
+    color: #6b7280;
+    font-variant-numeric: tabular-nums;
+}
+
+.event-message {
+    color: #e5e7eb;
+    line-height: 1.4;
+}
+
+.event-meta {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.meta-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: #9ca3af;
+}
+
+.meta-tag .value {
+    color: #e5e7eb;
+    font-weight: 600;
+}
+
+.progress-bar-container {
+    margin-bottom: 1.5rem;
+}
+
+.progress-bar-wrapper {
+    position: relative;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 0.75rem;
+}
+
+.progress-bar-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    font-variant-numeric: tabular-nums;
+    z-index: 10;
+}
+
+.velocity-indicator {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.velocity-item {
+    flex: 1;
+    text-align: center;
+}
+
+.velocity-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #60a5fa;
+    font-variant-numeric: tabular-nums;
+}
+
+.velocity-label {
+    font-size: 0.7rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filter-pills {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.filter-pill {
+    padding: 0.375rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.filter-pill.active {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.current-file-indicator {
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(96, 165, 250, 0.2);
+    border-top-color: #60a5fa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.current-file-info {
+    flex: 1;
+}
+
+.current-file-name {
+    font-weight: 600;
+    color: #e5e7eb;
+    margin-bottom: 0.25rem;
+}
+
+.current-file-status {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6b7280;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+.empty-state-text {
+    font-size: 0.875rem;
+}
+</style>
+
+<div class="progress-dashboard" id="progressDashboard" style="display: none;">
+    <!-- Header -->
+    <div class="progress-header">
+        <div class="progress-title">📊 Live Progress</div>
+        <div class="filter-pills">
+            <button class="filter-pill active" data-level="all" onclick="filterEvents('all')">All</button>
+            <button class="filter-pill" data-level="success" onclick="filterEvents('success')">Success</button>
+            <button class="filter-pill" data-level="error" onclick="filterEvents('error')">Errors</button>
+            <button class="filter-pill" data-level="info" onclick="filterEvents('info')">Info</button>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="progress-stats-grid">
+        <div class="stat-pill">
+            <div class="stat-value info" id="statTotal">0</div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-pill">
+            <div class="stat-value success" id="statSuccess">0</div>
+            <div class="stat-label">Success</div>
+        </div>
+        <div class="stat-pill">
+            <div class="stat-value error" id="statFailed">0</div>
+            <div class="stat-label">Failed</div>
+        </div>
+        <div class="stat-pill">
+            <div class="stat-value warning" id="statOCR">0</div>
+            <div class="stat-label">OCR</div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar-container">
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+            <div class="progress-bar-text" id="progressBarText">0%</div>
+        </div>
+    </div>
+
+    <!-- Velocity Indicators -->
+    <div class="velocity-indicator">
+        <div class="velocity-item">
+            <div class="velocity-value" id="velocityFiles">0</div>
+            <div class="velocity-label">files/sec</div>
+        </div>
+        <div class="velocity-item">
+            <div class="velocity-value" id="velocityAvgTime">0ms</div>
+            <div class="velocity-label">avg time</div>
+        </div>
+        <div class="velocity-item">
+            <div class="velocity-value" id="velocityETA">--:--</div>
+            <div class="velocity-label">ETA</div>
+        </div>
+    </div>
+
+    <!-- Current File Indicator -->
+    <div class="current-file-indicator" id="currentFileIndicator" style="display: none;">
+        <div class="spinner"></div>
+        <div class="current-file-info">
+            <div class="current-file-name" id="currentFileName">Processing file...</div>
+            <div class="current-file-status" id="currentFileStatus">Reading...</div>
+        </div>
+    </div>
+
+    <!-- Live Event Feed -->
+    <div class="live-feed" id="liveFeed">
+        <div class="empty-state">
+            <div class="empty-state-icon">📄</div>
+            <div class="empty-state-text">Waiting for processing to start...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== PROGRESS TRACKING ====================
+
+const progressState = {
+    events: [],
+    stats: {
+        total: 0,
+        processed: 0,
+        success: 0,
+        failed: 0,
+        ocr: 0,
+        skipped: 0
+    },
+    currentFile: null,
+    startTime: null,
+    filter: 'all'
+};
+
+function initProgressDashboard() {
+    // Show dashboard when processing starts
+    document.getElementById('progressDashboard').style.display = 'block';
+    progressState.startTime = Date.now();
+    progressState.events = [];
+    
+    // Clear the empty state
+    document.getElementById('liveFeed').innerHTML = '';
+}
+
+function handleProgressEvent(event) {
+    console.log('Progress event received:', event);
+    
+    // Add to events array
+    progressState.events.unshift(event); // Add to beginning
+    if (progressState.events.length > 100) {
+        progressState.events.pop(); // Keep only last 100
+    }
+    
+    // Update current file indicator
+    updateCurrentFileIndicator(event);
+    
+    // Update stats
+    updateProgressStats(event);
+    
+    // Add to live feed
+    addEventToFeed(event);
+    
+    // Update velocity metrics
+    updateVelocityMetrics();
+}
+
+function updateCurrentFileIndicator(event) {
+    const indicator = document.getElementById('currentFileIndicator');
+    const fileName = document.getElementById('currentFileName');
+    const fileStatus = document.getElementById('currentFileStatus');
+    
+    // Show indicator for active operations
+    const activeEvents = [
+        'file_reading', 'file_analyzing', 'ocr_started', 
+        'ocr_progress', 'ai_request_processing', 'file_moving'
+    ];
+    
+    if (activeEvents.includes(event.event_type)) {
+        indicator.style.display = 'flex';
+        fileName.textContent = event.file_name || 'Processing...';
+        fileStatus.textContent = getStatusText(event.event_type);
+    }
+    
+    // Hide for completion events
+    const completionEvents = ['file_moved', 'file_failed', 'file_skipped'];
+    if (completionEvents.includes(event.event_type)) {
+        setTimeout(() => {
+            indicator.style.display = 'none';
+        }, 1000);
+    }
+}
+
+function getStatusText(eventType) {
+    const statusMap = {
+        'file_reading': 'Reading file...',
+        'file_analyzing': 'Analyzing with AI...',
+        'ocr_started': 'Running OCR...',
+        'ocr_progress': 'OCR in progress...',
+        'ai_request_processing': 'AI classification...',
+        'file_moving': 'Moving file...'
+    };
+    return statusMap[eventType] || 'Processing...';
+}
+
+function updateProgressStats(event) {
+    // Update stats based on event type
+    switch(event.event_type) {
+        case 'file_discovered':
+            progressState.stats.total++;
+            break;
+        case 'file_moved':
+            progressState.stats.processed++;
+            progressState.stats.success++;
+            break;
+        case 'file_failed':
+            progressState.stats.processed++;
+            progressState.stats.failed++;
+            break;
+        case 'file_skipped':
+            progressState.stats.skipped++;
+            break;
+        case 'ocr_complete':
+            progressState.stats.ocr++;
+            break;
+    }
+    
+    // Update UI
+    document.getElementById('statTotal').textContent = progressState.stats.total;
+    document.getElementById('statSuccess').textContent = progressState.stats.success;
+    document.getElementById('statFailed').textContent = progressState.stats.failed;
+    document.getElementById('statOCR').textContent = progressState.stats.ocr;
+    
+    // Update progress bar
+    if (progressState.stats.total > 0) {
+        const percentage = (progressState.stats.processed / progressState.stats.total) * 100;
+        document.getElementById('progressBarFill').style.width = `${percentage}%`;
+        document.getElementById('progressBarText').textContent = `${Math.round(percentage)}% (${progressState.stats.processed}/${progressState.stats.total})`;
+    }
+}
+
+function addEventToFeed(event) {
+    const feed = document.getElementById('liveFeed');
+    
+    // Filter check
+    if (progressState.filter !== 'all' && event.level !== progressState.filter) {
+        return;
+    }
+    
+    const eventItem = document.createElement('div');
+    eventItem.className = `event-item ${event.level}`;
+    
+    // Format timestamp
+    const timestamp = new Date(event.timestamp);
+    const timeStr = timestamp.toLocaleTimeString();
+    
+    // Build event HTML
+    let html = `
+        <div class="event-header">
+            <div class="event-type">${formatEventType(event.event_type)}</div>
+            <div class="event-time">${timeStr}</div>
+        </div>
+        <div class="event-message">${event.message}</div>
+    `;
+    
+    // Add metadata if present
+    if (shouldShowMetadata(event)) {
+        html += '<div class="event-meta">';
+        
+        if (event.category) {
+            html += `<span class="meta-tag">Category: <span class="value">${event.category}</span></span>`;
+        }
+        if (event.confidence !== undefined) {
+            html += `<span class="meta-tag">Confidence: <span class="value">${Math.round(event.confidence * 100)}%</span></span>`;
+        }
+        if (event.duration_ms) {
+            html += `<span class="meta-tag">Duration: <span class="value">${event.duration_ms}ms</span></span>`;
+        }
+        if (event.file_size) {
+            const sizeMB = (event.file_size / (1024 * 1024)).toFixed(2);
+            html += `<span class="meta-tag">Size: <span class="value">${sizeMB} MB</span></span>`;
+        }
+        
+        html += '</div>';
+    }
+    
+    eventItem.innerHTML = html;
+    
+    // Add to feed (at the top)
+    if (feed.firstChild) {
+        feed.insertBefore(eventItem, feed.firstChild);
+    } else {
+        feed.appendChild(eventItem);
+    }
+    
+    // Limit feed size
+    while (feed.children.length > 50) {
+        feed.removeChild(feed.lastChild);
+    }
+}
+
+function shouldShowMetadata(event) {
+    return event.category || event.confidence !== undefined || 
+           event.duration_ms || event.file_size;
+}
+
+function formatEventType(type) {
+    return type.replace(/_/g, ' ').toUpperCase();
+}
+
+function updateVelocityMetrics() {
+    if (!progressState.startTime) return;
+    
+    const elapsedSeconds = (Date.now() - progressState.startTime) / 1000;
+    
+    // Files per second
+    const filesPerSec = progressState.stats.processed / elapsedSeconds;
+    document.getElementById('velocityFiles').textContent = filesPerSec.toFixed(2);
+    
+    // Average time (from events with duration_ms)
+    const durationEvents = progressState.events.filter(e => e.duration_ms);
+    if (durationEvents.length > 0) {
+        const avgTime = durationEvents.reduce((sum, e) => sum + e.duration_ms, 0) / durationEvents.length;
+        document.getElementById('velocityAvgTime').textContent = `${Math.round(avgTime)}ms`;
+    }
+    
+    // ETA
+    if (filesPerSec > 0) {
+        const remaining = progressState.stats.total - progressState.stats.processed;
+        const etaSeconds = remaining / filesPerSec;
+        const minutes = Math.floor(etaSeconds / 60);
+        const seconds = Math.floor(etaSeconds % 60);
+        document.getElementById('velocityETA').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+function filterEvents(level) {
+    progressState.filter = level;
+    
+    // Update active pill
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.dataset.level === level);
+    });
+    
+    // Rebuild feed
+    const feed = document.getElementById('liveFeed');
+    feed.innerHTML = '';
+    
+    progressState.events.slice().reverse().forEach(event => {
+        addEventToFeed(event);
+    });
+}
+
+// Connect to existing socket handlers
+socket.on('progress_event', handleProgressEvent);
+
+socket.on('classification_start', () => {
+    initProgressDashboard();
+});
+
+socket.on('classification_complete', (data) => {
+    // Final update
+    const event = {
+        event_type: 'batch_complete',
+        level: 'success',
+        timestamp: new Date().toISOString(),
+        message: `🎉 Processing complete! ${data.success}/${data.total} files successful`,
+        metadata: data
+    };
+    handleProgressEvent(event);
+});
+</script>
